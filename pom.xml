@@ -28,12 +28,12 @@
 		<repository>
 			<id>release</id>
 			<name>release</name>
-			<url>http://localhost:8081/artifactory/libs-release-local</url>
+			<url>http://host.docker.internal:8081/artifactory/libs-release-local</url>
 		</repository>
 		<snapshotRepository>
 			<id>snapshot</id>
 			<name>snapshot</name>
-			<url>http://localhost:8081/artifactory/libs-snapshot-local</url>
+			<url>http://host.docker.internal:8081/artifactory/libs-snapshot-local</url>
 		</snapshotRepository>
 	</distributionManagement>
 
