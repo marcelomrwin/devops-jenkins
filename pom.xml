@@ -11,7 +11,7 @@
 
 	<groupId>com.redhat</groupId>
 	<artifactId>devops</artifactId>
-	<version>0.0.4-SNAPSHOT</version>
+	<version>0.0.5-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>devops</name>
 	<description>DevOps Demo Project</description>
