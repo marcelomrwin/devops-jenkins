@@ -11,7 +11,7 @@
 
 	<groupId>com.redhat</groupId>
 	<artifactId>devops</artifactId>
-	<version>0.0.5-SNAPSHOT</version>
+	<version>1.3.2-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>devops</name>
 	<description>DevOps Demo Project</description>
@@ -87,6 +87,10 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-logging</artifactId>
+</dependency>
 	</dependencies>
 
 	<build>
