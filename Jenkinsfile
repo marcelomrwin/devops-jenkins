@@ -5,6 +5,10 @@ node {
   def tagVersion
   def retrieveArtifact
 
+	environment {
+        GITHUB_CREDENTIALS = credentials('github-credential')
+    }
+
   stage('Prepare') {
     mvnHome = tool 'M2'
   }
@@ -75,6 +79,13 @@ node {
 	pom = readMavenPom file: 'pom.xml'
 	artifactVersion = pom.version.replace("-SNAPSHOT","")
 	tagVersion = artifactVersion
+	
+	stage('Configure GitHub Credentials'){
+	      sh '''
+	      git config user.email "$GITHUB_CREDENTIALS_PSW"
+	      git config user.name "$GITHUB_CREDENTIALS_USR"
+	      '''               
+	}
 	
 	stage('Release Build And Upload Artifacts'){
 		if (isUnix()){
