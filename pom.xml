@@ -13,7 +13,7 @@
 
 	<groupId>com.redhat</groupId>
 	<artifactId>devops</artifactId>
-	<version>1.4.0-SNAPSHOT</version>
+	<version>1.5.0-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>devops</name>
 	<description>DevOps Demo Project</description>
