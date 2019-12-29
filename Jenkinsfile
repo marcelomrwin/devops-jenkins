@@ -68,8 +68,46 @@ node {
 
     stage("Smoke Test"){
        sh "curl --retry-delay 10 --retry 5 http://192.168.1.116:8888/devops"
+    }    
+  }
+  
+   if (env.BRANCH_NAME ==~ /release.*/){
+	pom = readMavenPom file: 'pom.xml'
+	artifactVersion = pom.version.replace("-SNAPSHOT","")
+	tagVersion = artifactVersion
+	
+	stage('Release Build And Upload Artifacts'){
+		if (isUnix()){
+		    sh "'${mvnHome}/bin/mvn' clean release:clean release:prepare release:perform"
+		}else{
+		    bat(/"${mvnHome}\bin\mvn" clean release:clean release:prepare release:perform/)
+		}
+	}
+	
+	stage('Deploy to Dev'){
+	    sh 'curl -u jenkins:password -T target/**.war "http://192.168.1.116:8888/manager/text/deploy?path=/devops&update=true"'
+	}
+	
+	stage("Smoke Test Dev"){
+       sh "curl --retry-delay 10 --retry 5 http://192.168.1.116:8888/devops"
+    }
+    
+    stage("QA Approval"){
+        echo "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input. Please go to ${env.BUILD_URL}."
+        input 'Approval for QA Deploy?';
     }
 
-  }
+	stage("Deploy from Artifactory to QA"){
+		retrieveArtifact = 'http://192.168.1.116:8081/artifactory/libs-release-local/com/redhat/devops/' + artifactVersion + '/devops-' + artifactVersion + '.war'
+		echo "${tagVersion} with artifact version ${artifactVersion}"
+		echo "Deploying war from http://192.168.1.116:8081/artifactory/libs-release-local/com/redhat/devops/${artifactVersion}/devops-${artifactVersion}.war"
+		sh 'curl -O ' + retrieveArtifact
+		sh 'curl -u jenkins:password -T target/**.war "http://192.168.1.116:8898/manager/text/deploy?path=/devops&update=true"'                                   
+	}
+	
+	stage("Smoke Test QA"){
+       sh "curl --retry-delay 10 --retry 5 http://192.168.1.116:8898/devops"
+    }                      
+ }
 
 }
