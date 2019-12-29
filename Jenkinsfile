@@ -6,7 +6,7 @@ node {
   def retrieveArtifact
 
   stage('Prepare') {
-    mvnHome = tool 'M2'
+    mvnHome = tool 'M2'        
   }
 
   stage('Checkout') {
@@ -75,6 +75,13 @@ node {
 	pom = readMavenPom file: 'pom.xml'
 	artifactVersion = pom.version.replace("-SNAPSHOT","")
 	tagVersion = artifactVersion
+	
+	stage('Configure GitHub Credentials'){		
+		withCredentials([usernamePassword(credentialsId: 'github-masales', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+	         sh 'git config user.email $PASSWORD'
+	         sh 'git config user.name $USERNAME'   
+	   	}
+	}
 	
 	stage('Release Build And Upload Artifacts'){
 		if (isUnix()){
