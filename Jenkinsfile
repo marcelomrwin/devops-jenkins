@@ -5,12 +5,13 @@ node {
   def tagVersion
   def retrieveArtifact
 
-	environment {
-        GITHUB_CREDENTIALS = credentials('github-credential')
-    }
+  environment {
+    GITHUB_CREDENTIALS = credentials('github-credential')
+  }
 
   stage('Prepare') {
     mvnHome = tool 'M2'
+    echo '${env.GITHUB_CREDENTIALS}'
   }
 
   stage('Checkout') {
@@ -81,10 +82,10 @@ node {
 	tagVersion = artifactVersion
 	
 	stage('Configure GitHub Credentials'){
-		echo "user.email $GITHUB_CREDENTIALS_PSW"		
-		sh 'git config user.email "$GITHUB_CREDENTIALS_PSW"'
-		echo "user.email $GITHUB_CREDENTIALS_USR"
-		sh 'git config user.name "$GITHUB_CREDENTIALS_USR"'
+		echo "user.email ${env.GITHUB_CREDENTIALS_PSW}"		
+		sh 'git config user.email "${env.GITHUB_CREDENTIALS_PSW}"'
+		echo "user.email ${env.GITHUB_CREDENTIALS_USR}"
+		sh 'git config user.name "${env.GITHUB_CREDENTIALS_USR}"'
 	}
 	
 	stage('Release Build And Upload Artifacts'){
