@@ -5,16 +5,8 @@ node {
   def tagVersion
   def retrieveArtifact
 
-  
-
   stage('Prepare') {
-    mvnHome = tool 'M2'
-    
-    withCredentials([usernamePassword(credentialsId: 'github-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-      echo 'USERNAME: $USERNAME'
-      echo 'EMAIL: $PASSWORD'      
-   	}
-    
+    mvnHome = tool 'M2'        
   }
 
   stage('Checkout') {
@@ -85,7 +77,7 @@ node {
 	tagVersion = artifactVersion
 	
 	stage('Configure GitHub Credentials'){		
-		withCredentials([usernamePassword(credentialsId: 'github-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+		withCredentials([usernamePassword(credentialsId: 'github-masales', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
 	         sh 'git config user.email $PASSWORD'
 	         sh 'git config user.name $USERNAME'   
 	   	}
