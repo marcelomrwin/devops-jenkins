@@ -81,10 +81,10 @@ node {
 	tagVersion = artifactVersion
 	
 	stage('Configure GitHub Credentials'){
-	      sh '''
-	      git config user.email "$GITHUB_CREDENTIALS_PSW"
-	      git config user.name "$GITHUB_CREDENTIALS_USR"
-	      '''               
+		echo "user.email ${GITHUB_CREDENTIALS_PSW}"		
+		sh 'git config user.email "${GITHUB_CREDENTIALS_PSW}"'
+		echo "user.email ${GITHUB_CREDENTIALS_USR}"
+		sh 'git config user.name "${GITHUB_CREDENTIALS_USR}"'
 	}
 	
 	stage('Release Build And Upload Artifacts'){
