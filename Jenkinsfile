@@ -25,9 +25,9 @@ pipeline {
 
   stages{
     stage('CI') {
-       agent {
-         node { label 'maven'}
-       }
+//       agent {
+//         node { label 'maven'}
+//       }
        stages{
          stage('Configurar Pipeline'){
            steps{
