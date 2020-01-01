@@ -32,7 +32,8 @@ pipeline {
          stage('Configurar Pipeline'){
            steps{
              script{
-               def branch = "${BRANCH}"
+               sh 'printenv'
+               def branch = "${env.BRANCH_NAME}"
 
                if (branch == 'master') {
                 echo 'Env = Produção'
