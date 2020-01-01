@@ -1,120 +1,94 @@
-node {
-  def mvnHome
-  def pom
-  def artifactVersion
-  def tagVersion
-  def retrieveArtifact
+@Library('funcoes-auxiliares') _
 
-  stage('Prepare') {
-    mvnHome = tool 'M2'        
+def version = null
+def artifactId = null
+def groupId = null
+def pom = null
+
+pipeline {
+  environment {
+    APPROVERS_PRD_GROUP = 'approvers_prd'
+    APPROVERS_HML_GROUP = 'approvers_hml'
+    OPERATIONS_GROUP = 'operations'
   }
 
-  stage('Checkout') {
-     checkout scm
+  agent any
+
+  tools {
+    maven "M3"
   }
 
-  stage('Build') {
-     if (isUnix()) {
-        sh "'${mvnHome}/bin/mvn' -Dmaven.test.failure.ignore clean package"
-     } else {
-        bat(/"${mvnHome}\bin\mvn" -Dmaven.test.failure.ignore clean package/)
-     }
+  options {
+    // Only keep the 3 most recent builds
+    buildDiscarder(logRotator(numToKeepStr:'3'))
   }
 
-  stage('Unit Test') {
-     junit '**/target/surefire-reports/TEST-*.xml'
-     archive 'target/*.jar'
-  }
+  stages{
+    stage('CI') {
+       agent {
+         node { label 'maven'}
+       }
+       stages{
+         stage('Configurar Pipeline'){
+           steps{
+             script{
+               def branch = "${BRANCH}"
 
-  stage('Integration Test') {
-    if (isUnix()) {
-       sh "'${mvnHome}/bin/mvn' -Dmaven.test.failure.ignore clean verify"
-    } else {
-       bat(/"${mvnHome}\bin\mvn" -Dmaven.test.failure.ignore clean verify/)
-    }
-  }
+               if (branch == 'master') {
+                echo 'Env = Produção'
 
-  stage('Sonar') {
-     if (isUnix()) {
-        sh "'${mvnHome}/bin/mvn' sonar:sonar -Psonar"
-     } else {
-        bat(/"${mvnHome}\bin\mvn" sonar:sonar -Psonar/)
-     }
-  }
+                env.ENVIRONMENT = "prd"
+                env.REQUIRES_BUILD = 'N'
+                env.REQUIRES_DEPLOYMENT = 'Y'
+                env.REQUIRES_APPROVAL = 'Y'
+                env.REQUIRES_PRD_APPROVAL = 'Y'
 
-  if(env.BRANCH_NAME == 'master'){
-    stage('Validate Build Post Prod Release') {
-      if (isUnix()) {
-         sh "'${mvnHome}/bin/mvn' clean package"
-      } else {
-         bat(/"${mvnHome}\bin\mvn" clean package/)
-      }
-    }
+              } else if (branch.matches('^release/.+$')) {
+                echo 'Env = HML'
+                env.ENVIRONMENT = "hml"
+                env.REQUIRES_BUILD = 'Y'
+                env.REQUIRES_DEPLOYMENT = 'Y'
+                env.REQUIRES_APPROVAL = 'Y'
+                env.REQUIRES_HML_APPROVAL = 'Y'
 
-  }
+              } else if (branch.matches('^hotfix/.+$')) {
+                echo 'Env = Hotfix'
+                env.ENVIRONMENT = "hml"
+                env.REQUIRES_BUILD = 'Y'
+                env.REQUIRES_DEPLOYMENT = 'Y'
+                env.REQUIRES_APPROVAL = 'Y'
+                env.REQUIRES_HML_APPROVAL = 'Y'
 
-  if(env.BRANCH_NAME == 'develop'){
-    stage('Snapshot Build And Upload Artifacts') {
-      if (isUnix()) {
-         sh "'${mvnHome}/bin/mvn' clean deploy"
-      } else {
-         bat(/"${mvnHome}\bin\mvn" clean deploy/)
-      }
-    }
-
-    stage('Deploy') {
-       sh 'curl -u jenkins:jenkins -T target/**.war "http://192.168.1.116:8888/manager/text/deploy?path=/devops&update=true"'
-    }
-
-    stage("Smoke Test"){
-       sh "curl --retry-delay 10 --retry 5 http://192.168.1.116:8888/devops"
-    }    
-  }
-  
-   if (env.BRANCH_NAME ==~ /release.*/){
-	pom = readMavenPom file: 'pom.xml'
-	artifactVersion = pom.version.replace("-SNAPSHOT","")
-	tagVersion = artifactVersion
-	
-	stage('Configure GitHub Credentials'){		
-		withCredentials([usernamePassword(credentialsId: 'github-masales', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-	         sh 'git config user.email $PASSWORD'
-	         sh 'git config user.name $USERNAME'   
-	   	}
-	}
-	
-	stage('Release Build And Upload Artifacts'){
-		if (isUnix()){
-		    sh "'${mvnHome}/bin/mvn' clean release:clean release:prepare release:perform"
-		}else{
-		    bat(/"${mvnHome}\bin\mvn" clean release:clean release:prepare release:perform/)
-		}
-	}
-	
-	stage('Deploy to Dev'){
-	    sh 'curl -u jenkins:password -T target/**.war "http://192.168.1.116:8888/manager/text/deploy?path=/devops&update=true"'
-	}
-	
-	stage("Smoke Test Dev"){
-       sh "curl --retry-delay 10 --retry 5 http://192.168.1.116:8888/devops"
-    }
-    
-    stage("QA Approval"){
-        echo "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input. Please go to ${env.BUILD_URL}."
-        input 'Approval for QA Deploy?';
+              } else if (branch == 'develop') {
+                echo 'Env = Desenvolvimento'
+                env.ENVIRONMENT = "dev"
+                env.REQUIRES_BUILD = 'Y'
+                env.REQUIRES_DEPLOYMENT = 'Y'
+                env.REQUIRES_APPROVAL = 'N'
+              } else if (branch.matches('^feature/.+$')) {
+                echo 'Env = Feature'
+                env.ENVIRONMENT = "dev"
+                env.REQUIRES_BUILD = 'Y'
+                env.REQUIRES_DEPLOYMENT = 'N'
+                env.REQUIRES_APPROVAL = 'N'
+              } else {
+                error "Erro de Validação: A branch ${branch} não é válida!"
+              }
+              sh 'printenv'
+             }
+           }
+         }
+         stage('Checkout'){
+           when{
+             environment name: 'REQUIRES_BUILD', value: 'Y'
+           }
+           steps{
+            checkout scm   
+           }           
+         }
+       }
     }
 
-	stage("Deploy from Artifactory to QA"){
-		retrieveArtifact = 'http://192.168.1.116:8081/artifactory/libs-release-local/com/redhat/devops/' + artifactVersion + '/devops-' + artifactVersion + '.war'
-		echo "${tagVersion} with artifact version ${artifactVersion}"
-		echo "Deploying war from http://192.168.1.116:8081/artifactory/libs-release-local/com/redhat/devops/${artifactVersion}/devops-${artifactVersion}.war"
-		sh 'curl -O ' + retrieveArtifact
-		sh 'curl -u jenkins:password -T target/**.war "http://192.168.1.116:8898/manager/text/deploy?path=/devops&update=true"'                                   
-	}
-	
-	stage("Smoke Test QA"){
-       sh "curl --retry-delay 10 --retry 5 http://192.168.1.116:8898/devops"
-    }                      
- }
+  }
 
 }
