@@ -205,10 +205,13 @@ pipeline {
             }
             post {
 	          success {
-	              archiveArtifacts artifacts: '**/dependency-check-report.*', onlyIfSuccessful: true
+	              sh 'tar -czvf target/dependency-check-reports.tar.gz target/dependency-check-report.*'
+	              archiveArtifacts artifacts: 'target/dependency-check-reports.tar.gz', onlyIfSuccessful: true
+	              
 	              archiveArtifacts artifacts: '**/jacoco.exec', onlyIfSuccessful: true
 	              
-	              archiveArtifacts artifacts: 'target/surefire-reports/*.*', onlyIfSuccessful: true
+	              sh 'tar -czvf target/surefire-reports.tar.gz target/surefire-reports/*.*'
+	              archiveArtifacts artifacts: 'target/surefire-reports.tar.gz', onlyIfSuccessful: true
 	              	              	              
 	              sh 'tar -czvf target/sonar.tar.gz target/sonar'
 	              archiveArtifacts artifacts: 'target/sonar.tar.gz', onlyIfSuccessful: true
