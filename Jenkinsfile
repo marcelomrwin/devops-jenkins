@@ -209,7 +209,7 @@ pipeline {
 	              archiveArtifacts artifacts: '**/jacoco.exec', onlyIfSuccessful: true
 	              
 	              archiveArtifacts artifacts: 'target/surefire-reports/*.*', onlyIfSuccessful: true
-	              
+	              	              	              
 	              sh 'tar -czvf target/sonar.tar.gz target/sonar'
 	              archiveArtifacts artifacts: 'target/sonar.tar.gz', onlyIfSuccessful: true
 	
