@@ -185,6 +185,7 @@ pipeline {
 	            junitPublisher(disabled: true)
 	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
+                  	sh 'printenv'
                     sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
                   }
                 }
