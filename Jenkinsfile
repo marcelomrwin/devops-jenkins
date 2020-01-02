@@ -1,8 +1,5 @@
 @Library('funcoes-auxiliares') _
 
-def version = null
-def artifactId = null
-def groupId = null
 def pom = null
 
 pipeline {
@@ -106,7 +103,8 @@ pipeline {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
 
-              env.ARTIFACT_ID = getArtifactIdFromPom()              
+              env.ARTIFACT_ID = getArtifactIdFromPom()
+              env.GROUP_ID = getGroupIdFromPom()              
             }
           }
         }
@@ -155,13 +153,10 @@ pipeline {
           }
           steps {
             script {
-              	echo "Executando análise estática..."              
-			  	version = getVersionFromPom()
-            	groupId = getGroupIdFromPom()
-            	artifactId = getArtifactIdFromPom()
+              	echo "Executando análise estática..."			  	
             	pom = readMavenPom file: "pom.xml";
             	
-            	echo "GroupId: ${groupId} ArtifactId: ${artifactId} Version: ${version}"
+            	echo "GroupId: ${GROUP_ID} ArtifactId: ${ARTIFACT_ID} Version: ${VERSION}"
 			  
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
@@ -171,7 +166,7 @@ pipeline {
 	            junitPublisher(disabled: false)
 	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
-                    sh "mvn sonar:sonar -Dsonar.projectName=${groupId}:${artifactId} -Dsonar.projectKey=${groupId}:${artifactId} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html -Dcobertura.report.format=html -Dsonar.cobertura.reportPath=target/cobertura/coverage.html"
+                    sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html -Dcobertura.report.format=html -Dsonar.cobertura.reportPath=target/cobertura/coverage.html"
                   }
                 }
 
@@ -224,12 +219,10 @@ pipeline {
           }
           steps {
             script {
-              echo "Exportando para o nexus..."
-              if ("${DEBUG_WORKFLOW}" == "N") {
+              echo "Exportando para o nexus..."              
                 withMaven(mavenSettingsConfig: 'maven-settings.xml') {
                   sh "mvn -DskipTests deploy"                  
-                }
-              }
+                }              
             }
           }
         }        

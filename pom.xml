@@ -22,7 +22,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<jacoco.version>0.8.5</jacoco.version>		
+		<jacoco.version>0.8.5</jacoco.version>
 	</properties>
 
 	<scm>
@@ -151,7 +151,7 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.5</version>
-				<configuration>					
+				<configuration>
 					<excludes>
 						<!-- Exclude class from test coverage -->
 						<exclude>**/*com/redhat/devops/DevopsApplication.class</exclude>
@@ -198,21 +198,26 @@
 				</executions>
 			</plugin>
 
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>5.2.4</version>
+				<configuration>
+					<format>ALL</format>
+					<centralAnalyzerEnabled>false</centralAnalyzerEnabled>
+					<versionCheckEnabled>true</versionCheckEnabled>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
 		</plugins>
-	</build>
-
-	<profiles>
-		<profile>
-			<id>sonar</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<properties>
-				<sonar.host.url>http://192.168.1.116:9000</sonar.host.url>
-				<sonar.login>994170e7865a3c79eb13c869970b18c6c332b104</sonar.login>
-			</properties>
-		</profile>
-	</profiles>
+	</build>	
 
 </project>
