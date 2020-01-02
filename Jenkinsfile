@@ -18,6 +18,7 @@ pipeline {
   options {
     // Only keep the 3 most recent builds
     buildDiscarder(logRotator(numToKeepStr:'3'))
+    timeout(time: 10, unit: 'MINUTES')
   }
 
   stages{
@@ -115,7 +116,13 @@ pipeline {
           steps {
             script {
               echo "Excutando o build da aplicação..."              
-              withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+              withMaven(mavenSettingsConfig: 'maven-settings.xml',
+	          options: [
+	            artifactsPublisher(disabled: true),
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false)
+	          ]) {
                 sh "mvn compile"
               }              
             }
@@ -128,7 +135,13 @@ pipeline {
           steps {
             script {
               echo "Executando testes unitários..."              
-              withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+              withMaven(mavenSettingsConfig: 'maven-settings.xml',
+	          options: [
+	            artifactsPublisher(disabled: true),
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false)
+	          ]) {
                 sh "mvn test"
               }              
             }
@@ -141,7 +154,13 @@ pipeline {
           steps {
             script {
               echo "Executando testes unitários..."              
-              withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+              withMaven(mavenSettingsConfig: 'maven-settings.xml',
+	          options: [
+	            artifactsPublisher(disabled: true),
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false)
+	          ]) {
                 sh "mvn clean verify"
               }              
             }
@@ -166,7 +185,7 @@ pipeline {
 	            junitPublisher(disabled: false)
 	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
-                    sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html -Dcobertura.report.format=html -Dsonar.cobertura.reportPath=target/cobertura/coverage.html"
+                    sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
                   }
                 }
 
@@ -193,9 +212,7 @@ pipeline {
 	
 	              sh 'tar -czvf target/jacoco.tar.gz target/site/jacoco'
 	              archiveArtifacts artifacts: 'target/jacoco.tar.gz', onlyIfSuccessful: true
-	
-	              sh 'tar -czvf target/cobertura.tar.gz target/site/cobertura'
-	              archiveArtifacts artifacts: 'target/cobertura.tar.gz', onlyIfSuccessful: true
+		              
 	          }
 	      	}          
         }
@@ -205,7 +222,13 @@ pipeline {
           }
           steps {
             script {              
-                withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+                withMaven(mavenSettingsConfig: 'maven-settings.xml',
+	          options: [
+	            artifactsPublisher(disabled: true),
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false)
+	          ]) {
                   sh "mvn -DnewVersion=${VERSION} versions:set"
                   sh "mvn versions:commit"
                 }
@@ -220,8 +243,14 @@ pipeline {
           steps {
             script {
               echo "Exportando para o nexus..."              
-                withMaven(mavenSettingsConfig: 'maven-settings.xml') {
-                  sh "mvn -DskipTests deploy"                  
+                withMaven(mavenSettingsConfig: 'maven-settings.xml',
+	          options: [
+	            artifactsPublisher(disabled: true),
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false)
+	          ]) {
+                  sh "mvn deploy -Dmaven.test.skip=true"                  
                 }              
             }
           }
