@@ -123,7 +123,7 @@ pipeline {
 	            openTasksPublisher(disabled: true),
 	            junitPublisher(disabled: true)
 	          ]) {
-                sh "mvn compile"
+                sh "mvn compile -Ddependency-check.skip=true -Dmaven.test.skip=true"
               }              
             }
           }
@@ -142,7 +142,7 @@ pipeline {
 	            openTasksPublisher(disabled: true),
 	            junitPublisher(disabled: true)
 	          ]) {
-                sh "mvn test"
+                sh "mvn test -Ddependency-check.skip=true"
               }              
             }
           }
@@ -185,7 +185,6 @@ pipeline {
 	            junitPublisher(disabled: true)
 	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
-                  	sh 'printenv'
                     sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
                   }
                 }
