@@ -2,7 +2,12 @@ package com.redhat.devops;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +29,16 @@ public class DevopsApplication {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public static void main(String[] args) {
-		SpringApplication.run(DevopsApplication.class, args);
+
+		Optional<String[]> optionalArgs = Optional.ofNullable(args);
+		List<Optional<String>> newArgs = new ArrayList<>();
+		optionalArgs.ifPresent(s -> Stream.of(s).forEach(x -> newArgs.add(Optional.of(x))));
+
+		// sanitize
+		List<String> argsString = newArgs.stream().filter(Optional::isPresent).map(Optional::get)
+				.filter(s -> Objects.nonNull(s) && !s.isEmpty()).collect(Collectors.toList());
+
+		SpringApplication.run(DevopsApplication.class, argsString.toArray(new String[argsString.size()]));
 	}
 
 	@Bean
