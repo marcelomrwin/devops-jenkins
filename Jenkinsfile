@@ -176,7 +176,7 @@ pipeline {
 	            junitPublisher(disabled: false)
 	          ]) {
 	            withSonarQubeEnv('SonarQube-7.9.2') {
-	              sh "mvn sonar:sonar -Dsonar.projectName=${groupId}:${artifactId} -Dsonar.projectKey=${groupId}:${artifactId} -Dsonar.projectVersion=$BUILD_NUMBER";
+	              sh "mvn sonar:sonar -Dsonar.projectVersion=$BUILD_NUMBER";
 	            }
 	          }
 	        }
