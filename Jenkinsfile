@@ -136,6 +136,19 @@ pipeline {
             }
           }
         }
+        stage('Testes de Integração') {
+          when {
+            environment name: 'REQUIRES_BUILD', value: 'Y'
+          }
+          steps {
+            script {
+              echo "Executando testes unitários..."              
+              withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+                sh "mvn clean verify"
+              }              
+            }
+          }
+        }
         stage('Analise Estática SonarQube') {
           when {
             environment name: 'REQUIRES_BUILD', value: 'Y'
@@ -187,20 +200,7 @@ pipeline {
 	              archiveArtifacts artifacts: 'target/cobertura.tar.gz', onlyIfSuccessful: true
 	          }
 	      	}          
-        }        	   
-        stage('Testes de Integração') {
-          when {
-            environment name: 'REQUIRES_BUILD', value: 'Y'
-          }
-          steps {
-            script {
-              echo "Executando testes unitários..."              
-              withMaven(mavenSettingsConfig: 'maven-settings.xml') {
-                sh "mvn clean verify"
-              }              
-            }
-          }
-        }
+        }        
        }
     }
 
