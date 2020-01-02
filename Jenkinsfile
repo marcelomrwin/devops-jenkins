@@ -74,6 +74,8 @@ pipeline {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
 //              sh 'printenv'
+				groupId = getGroupIdFromPom()
+				artifactId = getArtifactIdFromPom()
              }
            }
          }
@@ -176,7 +178,7 @@ pipeline {
 	            junitPublisher(disabled: false)
 	          ]) {
 	            withSonarQubeEnv('SonarQube-7.9.2') {
-	              sh "mvn sonar:sonar -Dsonar.projectVersion=$BUILD_NUMBER";
+	              sh "mvn sonar:sonar  -Dsonar.projectKey=${groupId}:${artifactId} -Dsonar.projectVersion=$BUILD_NUMBER";
 	            }
 	          }
 	        }
