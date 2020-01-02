@@ -14,7 +14,7 @@
 <link rel="stylesheet"
 	href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
 	integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-	crossorigin="anonymous"/>
+	crossorigin="anonymous" />
 
 <!-- Favicons -->
 <link rel="apple-touch-icon"
@@ -53,10 +53,9 @@
 		font-size: 3.5rem;
 	}
 }
-
 </style>
 <!-- Custom styles for this template -->
-<link href="main.css" rel="stylesheet"/>
+<link href="main.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -97,8 +96,29 @@
 	<main role="main" class="container">
 
 		<div class="starter-template">
-			<h1>Welcome to the DevOps II Course with Hotfix</h1>
-			<p class="lead" th:text=" 'Course Name: '+ ${course}" />			
+			<h1>The DevOps Application</h1>
+			<table class="table table-striped">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Id</th>
+						<th scope="col">Name</th>
+						<th scope="col">Username</th>
+						<th scope="col">Email</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:if="${users.empty}">
+						<td colspan="2">No Users Available</td>
+					</tr>
+					<tr th:each="user : ${users}">
+						<th scope="row"><span th:text="${user.id}"> Id </span></th>
+						<td><span th:text="${user.name}"> Name </span></td>
+						<td><span th:text="${user.username}"> Username </span></td>
+						<td><span th:text="${user.email}"> Email </span></td>
+					</tr>
+				</tbody>
+			</table>
+
 		</div>
 
 	</main>

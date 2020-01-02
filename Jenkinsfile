@@ -1,6 +1,5 @@
 @Library('funcoes-auxiliares') _
 
-def version = null
 def artifactId = null
 def groupId = null
 def pom = null
@@ -31,8 +30,7 @@ pipeline {
        stages{
          stage('Configurar Pipeline'){
            steps{
-             script{
-               sh 'printenv'
+             script{               
                def branch = "${env.BRANCH_NAME}"
 
                if (branch == 'master') {
@@ -75,7 +73,7 @@ pipeline {
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
-              sh 'printenv'
+//              sh 'printenv'
              }
            }
          }
@@ -87,6 +85,58 @@ pipeline {
             checkout scm   
            }           
          }
+         stage('Configurar Build') {
+          when {
+            environment name: 'REQUIRES_BUILD', value: 'Y'
+          }
+          steps {
+            script {
+              def branch = "${env.BRANCH_NAME}"
+
+              if (branch.matches('^release/.+$')) {
+              	pom = readMavenPom file: 'pom.xml'
+                env.VERSION = pom.version.replace("-SNAPSHOT","")
+              } else if (branch.matches('^hotfix/.+$')) {
+                echo 'Env = Hotfix'
+                env.VERSION = branch.replaceAll('^hotfix/', '') + "-" + "${BUILD_ID}"
+              } else if (branch == 'develop') {
+                env.VERSION = getVersionFromPom() + "-" + "${BUILD_ID}"
+              } else {
+                error "Erro de Validação: A branch ${branch} não é válida!"
+              }
+
+              env.ARTIFACT_ID = getArtifactIdFromPom()
+              sh 'printenv'
+            }
+          }
+        }
+        stage('Build') {
+          when {
+            environment name: 'REQUIRES_BUILD', value: 'Y'
+          }
+          steps {
+            script {
+              echo "Excutando o build da aplicação..."              
+              withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+                sh "mvn compile"
+              }              
+            }
+          }
+        }
+        stage('Testes Unitários') {
+          when {
+            environment name: 'REQUIRES_BUILD', value: 'Y'
+          }
+          steps {
+            script {
+              echo "Executando testes unitários..."              
+              withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+                junit '**/target/surefire-reports/TEST-*.xml'
+                archiveArtifacts artifacts: 'target/*.jar', allowEmptyArchive: true
+              }              
+            }
+          }
+        }
        }
     }
 
