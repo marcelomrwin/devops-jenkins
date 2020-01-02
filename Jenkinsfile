@@ -171,6 +171,7 @@ pipeline {
                   echo "Status da análise: ${qg.status}"
                 }
               
+            	}
             }
             post {
 	          success {
@@ -185,8 +186,7 @@ pipeline {
 	              sh 'tar -czvf target/cobertura.tar.gz target/site/cobertura'
 	              archiveArtifacts artifacts: 'target/cobertura.tar.gz', onlyIfSuccessful: true
 	          }
-	      	}
-          }
+	      	}          
         }        	   
         stage('Testes de Integração') {
           when {
