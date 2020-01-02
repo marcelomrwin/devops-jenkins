@@ -74,13 +74,7 @@ pipeline {
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
-//              sh 'printenv'
-				version = getVersionFromPom()
-            	groupId = getGroupIdFromPom()
-            	artifactId = getArtifactIdFromPom()
-            	pom = readMavenPom file: "pom.xml";
-            	
-            	echo "GroupId: ${groupId} ArtifactId: ${artifactId} Version: ${version}"				
+//              sh 'printenv'								
              }
            }
          }
@@ -149,6 +143,12 @@ pipeline {
           steps {
             script {
               	echo "Executando análise estática..."              
+			  	version = getVersionFromPom()
+            	groupId = getGroupIdFromPom()
+            	artifactId = getArtifactIdFromPom()
+            	pom = readMavenPom file: "pom.xml";
+            	
+            	echo "GroupId: ${groupId} ArtifactId: ${artifactId} Version: ${version}"
 			  
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
@@ -158,7 +158,7 @@ pipeline {
 	            junitPublisher(disabled: false)
 	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
-                    sh 'mvn sonar:sonar -Dsonar.projectName=${groupId}:${artifactId} -Dsonar.projectKey=${groupId}:${artifactId} -Dsonar.projectVersion=$BUILD_NUMBER'
+                    sh "mvn sonar:sonar -Dsonar.projectName=${groupId}:${artifactId} -Dsonar.projectKey=${groupId}:${artifactId} -Dsonar.projectVersion=$BUILD_NUMBER"
                   }
                 }
 
