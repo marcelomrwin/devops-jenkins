@@ -206,6 +206,7 @@
 					<format>ALL</format>
 					<centralAnalyzerEnabled>false</centralAnalyzerEnabled>
 					<versionCheckEnabled>true</versionCheckEnabled>
+					<cveValidForHours>24</cveValidForHours>
 				</configuration>
 				<executions>
 					<execution>

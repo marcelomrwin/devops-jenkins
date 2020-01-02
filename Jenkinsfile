@@ -251,7 +251,7 @@ pipeline {
 	            openTasksPublisher(disabled: true),
 	            junitPublisher(disabled: true)
 	          ]) {
-                  sh "mvn deploy -Dmaven.test.skip=true"                  
+                  sh "mvn deploy -Dmaven.test.skip=true -Ddependency-check.skip=true"                  
                 }              
             }
           }
