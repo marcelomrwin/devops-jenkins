@@ -37,7 +37,7 @@ pipeline {
                 echo 'Env = Produção'
 
                 env.ENVIRONMENT = "prd"
-                env.REQUIRES_BUILD = 'Y'
+                env.REQUIRES_BUILD = 'N'
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
                 env.REQUIRES_PRD_APPROVAL = 'Y'
