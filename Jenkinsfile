@@ -101,7 +101,7 @@ pipeline {
                 echo 'Env = Hotfix'
                 env.VERSION = branch.replaceAll('^hotfix/', '') + "-" + "${BUILD_ID}"
               } else if (branch == 'develop') {
-                env.VERSION = getVersionFromPom() + "-" + "${BUILD_ID}"
+                env.VERSION = getVersionFromPom()
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
@@ -178,7 +178,9 @@ pipeline {
                 timeout(time: 2, unit: 'MINUTES') {
                   def qg = waitQualityGate()
                   
-                  if (qg.status != 'OK') {
+                  echo "Resultado da análise completo: ${qg}"
+                  
+                  if (qg.status == 'ERROR') {
                     error "Falha devido a má qualidade do código.\nStatus da análise: ${qg.status}"
                   }
                   echo "Status da análise: ${qg.status}"
@@ -190,6 +192,7 @@ pipeline {
 	          success {
 	              archiveArtifacts artifacts: '**/dependency-check-report.json', onlyIfSuccessful: true
 	              archiveArtifacts artifacts: '**/jacoco.exec', onlyIfSuccessful: true
+	              
 	              sh 'tar -czvf target/sonar.tar.gz target/sonar'
 	              archiveArtifacts artifacts: 'target/sonar.tar.gz', onlyIfSuccessful: true
 	
@@ -200,9 +203,38 @@ pipeline {
 	              archiveArtifacts artifacts: 'target/cobertura.tar.gz', onlyIfSuccessful: true
 	          }
 	      	}          
+        }
+        stage('Atualizando Release') {
+          when {
+            environment name: 'REQUIRES_BUILD', value: 'Y'
+          }
+          steps {
+            script {              
+                withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+                  sh "mvn -DnewVersion=${VERSION} versions:set"
+                  sh "mvn versions:commit"
+                }
+              
+            }
+          }
+        }
+        stage('Publicar no Nexus') {
+          when {
+            environment name: 'REQUIRES_BUILD', value: 'Y'
+          }
+          steps {
+            script {
+              echo "Exportando para o nexus..."
+              if ("${DEBUG_WORKFLOW}" == "N") {
+                withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+                  sh "mvn -DskipTests deploy"                  
+                }
+              }
+            }
+          }
         }        
        }
-    }
+    }//end CI
 
   }
 
