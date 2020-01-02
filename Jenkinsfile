@@ -157,9 +157,9 @@ pipeline {
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
+	            findbugsPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            junitPublisher(disabled: true)
 	          ]) {
                 sh "mvn clean verify"
               }              
@@ -190,22 +190,25 @@ pipeline {
                 }
 
                 timeout(time: 2, unit: 'MINUTES') {
-                  def qg = waitQualityGate()
+                  withSonarQubeEnv('SonarQube-7.9.2') {
+                  	def qg = waitQualityGate()                  
+                  	echo "Resultado da análise completo: ${qg}"
                   
-                  echo "Resultado da análise completo: ${qg}"
-                  
-                  if (qg.status == 'ERROR') {
-                    error "Falha devido a má qualidade do código.\nStatus da análise: ${qg.status}"
+                  	if (qg.status == 'ERROR') {
+                    	error "Falha devido a má qualidade do código.\nStatus da análise: ${qg.status}"
+                  	}
+                  	echo "Status da análise: ${qg.status}"
                   }
-                  echo "Status da análise: ${qg.status}"
                 }
               
             	}
             }
             post {
 	          success {
-	              archiveArtifacts artifacts: '**/dependency-check-report.json', onlyIfSuccessful: true
+	              archiveArtifacts artifacts: '**/dependency-check-report.*', onlyIfSuccessful: true
 	              archiveArtifacts artifacts: '**/jacoco.exec', onlyIfSuccessful: true
+	              
+	              archiveArtifacts artifacts: 'target/surefire-reports/*.*', onlyIfSuccessful: true
 	              
 	              sh 'tar -czvf target/sonar.tar.gz target/sonar'
 	              archiveArtifacts artifacts: 'target/sonar.tar.gz', onlyIfSuccessful: true
@@ -246,9 +249,9 @@ pipeline {
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true)
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false)
 	          ]) {
                   sh "mvn deploy -Dmaven.test.skip=true -Ddependency-check.skip=true"                  
                 }              
