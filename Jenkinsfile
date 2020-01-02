@@ -1,5 +1,6 @@
 @Library('funcoes-auxiliares') _
 
+def version = null
 def artifactId = null
 def groupId = null
 def pom = null
@@ -74,8 +75,12 @@ pipeline {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
 //              sh 'printenv'
-				groupId = getGroupIdFromPom()
-				artifactId = getArtifactIdFromPom()
+				version = getVersionFromPom()
+            	groupId = getGroupIdFromPom()
+            	artifactId = getArtifactIdFromPom()
+            	pom = readMavenPom file: "pom.xml";
+            	
+            	echo "GroupId: ${groupId} ArtifactId: ${artifactId} Version: ${version}"				
              }
            }
          }
@@ -143,16 +148,22 @@ pipeline {
           }
           steps {
             script {
-              echo "Executando análise estática..."
-              
-                withMaven(mavenSettingsConfig: 'maven-settings.xml') {
+              	echo "Executando análise estática..."              
+			  
+                withMaven(mavenSettingsConfig: 'maven-settings.xml',
+	          options: [
+	            artifactsPublisher(disabled: true),
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false)
+	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
                     sh 'mvn sonar:sonar -Dsonar.projectName=${groupId}:${artifactId} -Dsonar.projectKey=${groupId}:${artifactId} -Dsonar.projectVersion=$BUILD_NUMBER'
                   }
                 }
 
-                timeout(time: 5, unit: 'MINUTES') {
-                  def qg = waitForQualityGate()
+                timeout(time: 2, unit: 'MINUTES') {
+                  def qg = waitQualityGate()
                   
                   if (qg.status != 'OK') {
                     error "Falha devido a má qualidade do código.\nStatus da análise: ${qg.status}"
@@ -161,28 +172,7 @@ pipeline {
                 }
               
             }
-          }
-        }
-        stage('Análise Estática no SonarQube') {
-          when {
-            environment name: 'REQUIRES_BUILD', value: 'Y'
-          }
-	      steps {
-	        script{
-	            echo "Executando análise estática..."	        
-	          withMaven( maven: 'M3', mavenSettingsConfig: 'maven-settings.xml',
-	          options: [
-	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
-	          ]) {
-	            withSonarQubeEnv('SonarQube-7.9.2') {
-	              sh "mvn sonar:sonar  -Dsonar.projectKey=${groupId}:${artifactId} -Dsonar.projectVersion=$BUILD_NUMBER";
-	            }
-	          }
-	        }
-	        post {
+            post {
 	          success {
 	              archiveArtifacts artifacts: '**/dependency-check-report.json', onlyIfSuccessful: true
 	              archiveArtifacts artifacts: '**/jacoco.exec', onlyIfSuccessful: true
@@ -196,8 +186,8 @@ pipeline {
 	              archiveArtifacts artifacts: 'target/cobertura.tar.gz', onlyIfSuccessful: true
 	          }
 	      	}
-	      }
-	    }		   
+          }
+        }        	   
         stage('Testes de Integração') {
           when {
             environment name: 'REQUIRES_BUILD', value: 'Y'
