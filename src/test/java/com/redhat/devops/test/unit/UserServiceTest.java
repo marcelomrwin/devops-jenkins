@@ -1,4 +1,4 @@
-package com.redhat.devops;
+package com.redhat.devops.test.unit;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.redhat.devops.web;
+package com.redhat.devops.test.unit.test.integration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;

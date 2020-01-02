@@ -1,4 +1,4 @@
-package com.redhat.devops.web;
+package com.redhat.devops.test.unit;
 
 import java.io.IOException;
 import java.io.InputStream;
