@@ -40,7 +40,7 @@ public class UserController {
 	@GetMapping(path = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<User>> listAllJson() {
 		logger.info("Processing list request");
-		return new ResponseEntity<List<User>>(service.getAllUsersSortedById(), HttpStatus.OK);
+		return new ResponseEntity<>(service.getAllUsersSortedById(), HttpStatus.OK);
 	}
 
 }

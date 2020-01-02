@@ -40,15 +40,14 @@ public class DevopsApplication {
 				userService.saveAll(users);
 				logger.info("Users Saved!");
 			} catch (IOException e) {
-				logger.error("Unable to save users: " + e.getMessage());
+				logger.error("Unable to save users: {}", e.getMessage());
 			}
 		};
 	}
 
 	@Bean
 	RestTemplate getTemplate() {
-		RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory());
-		return restTemplate;
+		return new RestTemplate(getClientHttpRequestFactory());
 	}
 
 	private ClientHttpRequestFactory getClientHttpRequestFactory() {
