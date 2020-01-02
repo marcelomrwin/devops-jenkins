@@ -119,9 +119,9 @@ pipeline {
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
+	            findbugsPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            junitPublisher(disabled: true)
 	          ]) {
                 sh "mvn compile"
               }              
@@ -138,9 +138,9 @@ pipeline {
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
+	            findbugsPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            junitPublisher(disabled: true)
 	          ]) {
                 sh "mvn test"
               }              
@@ -180,9 +180,9 @@ pipeline {
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
+	            findbugsPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            junitPublisher(disabled: true)
 	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
                     sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
@@ -225,9 +225,9 @@ pipeline {
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
+	            findbugsPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            junitPublisher(disabled: true)
 	          ]) {
                   sh "mvn -DnewVersion=${VERSION} versions:set"
                   sh "mvn versions:commit"
@@ -246,9 +246,9 @@ pipeline {
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
+	            findbugsPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            junitPublisher(disabled: true)
 	          ]) {
                   sh "mvn deploy -Dmaven.test.skip=true"                  
                 }              
