@@ -4,9 +4,7 @@ def pom = null
 
 pipeline {
   environment {
-    APPROVERS_PRD_GROUP = 'approvers_prd'
-    APPROVERS_HML_GROUP = 'approvers_hml'
-    OPERATIONS_GROUP = 'operations'
+    WILDFLY_GROUP = 'main-server-group'
   }
 
   agent any
@@ -29,7 +27,7 @@ pipeline {
        stages{
          stage('Configurar Pipeline'){
            steps{
-             script{               
+             script{
                def branch = "${env.BRANCH_NAME}"
 
                if (branch == 'master') {
@@ -72,7 +70,8 @@ pipeline {
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
-//              sh 'printenv'								
+              sh 'printenv'
+              error "Eu quis cancelar!"
              }
            }
          }
@@ -81,8 +80,8 @@ pipeline {
              environment name: 'REQUIRES_BUILD', value: 'Y'
            }
            steps{
-            checkout scm   
-           }           
+            checkout scm
+           }
          }
          stage('Configurar Build') {
           when {
@@ -105,7 +104,7 @@ pipeline {
               }
 
               env.ARTIFACT_ID = getArtifactIdFromPom()
-              env.GROUP_ID = getGroupIdFromPom()              
+              env.GROUP_ID = getGroupIdFromPom()
             }
           }
         }
@@ -115,16 +114,18 @@ pipeline {
           }
           steps {
             script {
-              echo "Excutando o build da aplicação..."              
+              echo "Excutando o build da aplicação..."
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
 	            findbugsPublisher(disabled: true),
 	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true)
+	            junitPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            jacocoPublisher(disabled: true)
 	          ]) {
                 sh "mvn compile -Ddependency-check.skip=true -Dmaven.test.skip=true"
-              }              
+              }
             }
           }
         }
@@ -134,16 +135,18 @@ pipeline {
           }
           steps {
             script {
-              echo "Executando testes unitários..."              
+              echo "Executando testes unitários..."
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
 	            findbugsPublisher(disabled: true),
 	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true)
+	            junitPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            jacocoPublisher(disabled: true)
 	          ]) {
                 sh "mvn test -Ddependency-check.skip=true"
-              }              
+              }
             }
           }
         }
@@ -153,16 +156,18 @@ pipeline {
           }
           steps {
             script {
-              echo "Executando testes unitários..."              
+              echo "Executando testes unitários..."
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: true),
+	            findbugsPublisher(disabled: false),
+	            openTasksPublisher(disabled: false),
+	            junitPublisher(disabled: false),
 	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true)
+	            jacocoPublisher(disabled: false)
 	          ]) {
                 sh "mvn clean verify"
-              }              
+              }
             }
           }
         }
@@ -172,17 +177,19 @@ pipeline {
           }
           steps {
             script {
-              	echo "Executando análise estática..."			  	
+              	echo "Executando análise estática..."
             	pom = readMavenPom file: "pom.xml";
-            	
+
             	echo "GroupId: ${GROUP_ID} ArtifactId: ${ARTIFACT_ID} Version: ${VERSION}"
-			  
+
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
 	            findbugsPublisher(disabled: true),
 	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true)
+	            junitPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            jacocoPublisher(disabled: true)
 	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
                     sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
@@ -191,54 +198,55 @@ pipeline {
 
                 timeout(time: 2, unit: 'MINUTES') {
                   withSonarQubeEnv('SonarQube-7.9.2') {
-                  	def qg = waitQualityGate()                  
+                  	def qg = waitQualityGate()
                   	echo "Resultado da análise completo: ${qg}"
-                  
+
                   	if (qg.status == 'ERROR') {
                     	error "Falha devido a má qualidade do código.\nStatus da análise: ${qg.status}"
                   	}
                   	echo "Status da análise: ${qg.status}"
                   }
                 }
-              
+
             	}
             }
             post {
 	          success {
 	              sh 'tar -czvf target/dependency-check-reports.tar.gz target/dependency-check-report.*'
 	              archiveArtifacts artifacts: 'target/dependency-check-reports.tar.gz', onlyIfSuccessful: true
-	              
+
 	              archiveArtifacts artifacts: '**/jacoco.exec', onlyIfSuccessful: true
-	              
+
 	              sh 'tar -czvf target/surefire-reports.tar.gz target/surefire-reports/*.*'
 	              archiveArtifacts artifacts: 'target/surefire-reports.tar.gz', onlyIfSuccessful: true
-	              	              	              
+
 	              sh 'tar -czvf target/sonar.tar.gz target/sonar'
 	              archiveArtifacts artifacts: 'target/sonar.tar.gz', onlyIfSuccessful: true
-	
+
 	              sh 'tar -czvf target/jacoco.tar.gz target/site/jacoco'
 	              archiveArtifacts artifacts: 'target/jacoco.tar.gz', onlyIfSuccessful: true
-		              
+
 	          }
-	      	}          
+	      	}
         }
         stage('Atualizando Release') {
           when {
             environment name: 'REQUIRES_BUILD', value: 'Y'
           }
           steps {
-            script {              
+            script {
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
 	            findbugsPublisher(disabled: true),
 	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true)
+	            junitPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            jacocoPublisher(disabled: true)
 	          ]) {
                   sh "mvn -DnewVersion=${VERSION} versions:set"
                   sh "mvn versions:commit"
                 }
-              
             }
           }
         }
@@ -248,19 +256,21 @@ pipeline {
           }
           steps {
             script {
-              echo "Exportando para o nexus..."              
+              echo "Exportando para o nexus..."
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
 	          options: [
 	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false)
+	            findbugsPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            junitPublisher(disabled: true),
+	            openTasksPublisher(disabled: true),
+	            jacocoPublisher(disabled: true)
 	          ]) {
-                  sh "mvn deploy -Dmaven.test.skip=true -Ddependency-check.skip=true"                  
-                }              
+                  sh "mvn deploy -Dmaven.test.skip=true -Ddependency-check.skip=true"
+                }
             }
           }
-        }        
+        }
        }
     }//end CI
 
