@@ -236,17 +236,17 @@
 						<configuration>
 							<filename>${project.build.finalName}.war</filename>
 							<server-groups>
-								<server-group>${WILDFLY_GROUP}</server-group>
+								<server-group>${env.WILDFLY_GROUP}</server-group>
 							</server-groups>
 							<profiles>
 								<profile>ha</profile>
 							</profiles>
-							<hostname>${WILDFLY_URL}</hostname>
-							<port>${WILDFLY_PORT}</port>
-							<username>${WILDFLY_USER}</username>
-							<password>${WILDFLY_PASSWORD}</password>
+							<hostname>${env.WILDFLY_URL}</hostname>
+							<port>${env.WILDFLY_PORT}</port>
+							<username>${env.WILDFLY_USER}</username>
+							<password>${env.WILDFLY_PASSWORD}</password>
 							<commands>
-								<command>/server-group=${WILDFLY_GROUP}:restart-servers()</command>
+								<command>/server-group=${env.WILDFLY_GROUP}:restart-servers()</command>
 							</commands>
 						</configuration>
 					</plugin>
