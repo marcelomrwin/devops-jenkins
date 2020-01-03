@@ -220,4 +220,39 @@
 		</plugins>
 	</build>
 
+	<profiles>
+		<profile>
+			<id>wildfly-domain</id>
+			<properties>
+				<wildfly-maven-plugin.version>2.0.2.Final</wildfly-maven-plugin.version>
+			</properties>
+			<build>
+				<finalName>${project.artifactId}</finalName>
+				<plugins>
+					<plugin>
+						<groupId>org.wildfly.plugins</groupId>
+						<artifactId>wildfly-maven-plugin</artifactId>
+						<version>${wildfly-maven-plugin.version}</version>
+						<configuration>
+							<filename>${project.build.finalName}.war</filename>
+							<server-groups>
+								<server-group>${WILDFLY_GROUP}</server-group>
+							</server-groups>
+							<profiles>
+								<profile>ha</profile>
+							</profiles>
+							<hostname>${WILDFLY_URL}</hostname>
+							<port>${WILDFLY_PORT}</port>
+							<username>${WILDFLY_USER}</username>
+							<password>${WILDFLY_PASSWORD}</password>
+							<commands>
+								<command>/server-group=${WILDFLY_GROUP}:restart-servers()</command>
+							</commands>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 </project>
