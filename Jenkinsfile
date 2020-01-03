@@ -38,7 +38,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
                 env.REQUIRES_PRD_APPROVAL = 'Y'
-                env.WILDFLY_URL = ${WILDFLY_URL_PRD}
+                env.WILDFLY_URL = "${WILDFLY_URL_PRD}"
 
               } else if (branch.matches('^release/.+$')) {
                 echo 'Env = HML'
@@ -47,7 +47,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
                 env.REQUIRES_HML_APPROVAL = 'Y'
-                env.WILDFLY_URL = ${WILDFLY_URL_HML}
+                env.WILDFLY_URL = "${WILDFLY_URL_HML}"
 
               } else if (branch.matches('^hotfix/.+$')) {
                 echo 'Env = Hotfix'
@@ -56,7 +56,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
                 env.REQUIRES_HML_APPROVAL = 'Y'
-                env.WILDFLY_URL = ${WILDFLY_URL_PRD}
+                env.WILDFLY_URL = "${WILDFLY_URL_PRD}"
 
               } else if (branch == 'develop') {
                 echo 'Env = Desenvolvimento'
@@ -64,14 +64,14 @@ pipeline {
                 env.REQUIRES_BUILD = 'Y'
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'N'
-                env.WILDFLY_URL = ${WILDFLY_URL_DEV}
+                env.WILDFLY_URL = "${WILDFLY_URL_DEV}"
               } else if (branch.matches('^feature/.+$')) {
                 echo 'Env = Feature'
                 env.ENVIRONMENT = "dev"
                 env.REQUIRES_BUILD = 'Y'
                 env.REQUIRES_DEPLOYMENT = 'N'
                 env.REQUIRES_APPROVAL = 'N'
-                env.WILDFLY_URL = ${WILDFLY_URL_DEV}
+                env.WILDFLY_URL = "${WILDFLY_URL_DEV}"
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
