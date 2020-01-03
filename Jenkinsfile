@@ -70,8 +70,7 @@ pipeline {
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
-              sh 'printenv'
-              error "Eu quis cancelar!"
+//              sh 'printenv'
              }
            }
          }
@@ -177,20 +176,19 @@ pipeline {
           }
           steps {
             script {
-              	echo "Executando análise estática..."
+              echo "Executando análise estática..."
             	pom = readMavenPom file: "pom.xml";
-
             	echo "GroupId: ${GROUP_ID} ArtifactId: ${ARTIFACT_ID} Version: ${VERSION}"
 
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
-	          options: [
-	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            jacocoPublisher(disabled: true)
-	          ]) {
+    	          options: [
+    	            artifactsPublisher(disabled: true),
+    	            findbugsPublisher(disabled: true),
+    	            openTasksPublisher(disabled: true),
+    	            junitPublisher(disabled: true),
+    	            openTasksPublisher(disabled: true),
+    	            jacocoPublisher(disabled: true)
+    	          ]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
                     sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
                   }
@@ -258,22 +256,45 @@ pipeline {
             script {
               echo "Exportando para o nexus..."
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
-	          options: [
-	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            jacocoPublisher(disabled: true)
-	          ]) {
-                  sh "mvn deploy -Dmaven.test.skip=true -Ddependency-check.skip=true"
-                }
+    	          options: [
+    	            artifactsPublisher(disabled: true),
+    	            findbugsPublisher(disabled: true),
+    	            openTasksPublisher(disabled: true),
+    	            junitPublisher(disabled: true),
+    	            openTasksPublisher(disabled: true),
+    	            jacocoPublisher(disabled: true)
+    	          ]) {
+                    sh "mvn deploy -Dmaven.test.skip=true -Ddependency-check.skip=true"
+                  }
             }
           }
         }
        }
     }//end CI
-
+    stage("CD") {
+      stages {
+        stage('Realizar Deploy do artefato') {
+          when {
+            allOf {
+              environment name: 'REQUIRES_DEPLOYMENT', value: 'Y'
+            }
+          }
+          agent "any"
+          steps {
+            script {
+              echo "Realizando deploy no ambiente  ${ENVIRONMENT}"
+              withMaven(mavenSettingsConfig: 'maven-settings.xml',
+              options: [
+                artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
+                  sh "mvn wildfly:undeploy -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
+                  sh "mvn wildfly:execute-commands -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
+                  sh "mvn wildfly:deploy -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
+                }
+            }
+          }
+        }
+      }//stages
+    }//end CD
   }
 
 }
