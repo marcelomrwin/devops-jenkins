@@ -38,6 +38,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
                 env.REQUIRES_PRD_APPROVAL = 'Y'
+                env.WILDFLY_URL = ${WILDFLY_URL_PRD}
 
               } else if (branch.matches('^release/.+$')) {
                 echo 'Env = HML'
@@ -46,6 +47,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
                 env.REQUIRES_HML_APPROVAL = 'Y'
+                env.WILDFLY_URL = ${WILDFLY_URL_HML}
 
               } else if (branch.matches('^hotfix/.+$')) {
                 echo 'Env = Hotfix'
@@ -54,6 +56,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
                 env.REQUIRES_HML_APPROVAL = 'Y'
+                env.WILDFLY_URL = ${WILDFLY_URL_PRD}
 
               } else if (branch == 'develop') {
                 echo 'Env = Desenvolvimento'
@@ -61,12 +64,14 @@ pipeline {
                 env.REQUIRES_BUILD = 'Y'
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'N'
+                env.WILDFLY_URL = ${WILDFLY_URL_DEV}
               } else if (branch.matches('^feature/.+$')) {
                 echo 'Env = Feature'
                 env.ENVIRONMENT = "dev"
                 env.REQUIRES_BUILD = 'Y'
                 env.REQUIRES_DEPLOYMENT = 'N'
                 env.REQUIRES_APPROVAL = 'N'
+                env.WILDFLY_URL = ${WILDFLY_URL_DEV}
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
@@ -233,15 +238,7 @@ pipeline {
           }
           steps {
             script {
-                withMaven(mavenSettingsConfig: 'maven-settings.xml',
-	          options: [
-	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            jacocoPublisher(disabled: true)
-	          ]) {
+                withMaven(mavenSettingsConfig: 'maven-settings.xml',options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
                   sh "mvn -DnewVersion=${VERSION} versions:set"
                   sh "mvn versions:commit"
                 }
@@ -255,15 +252,7 @@ pipeline {
           steps {
             script {
               echo "Exportando para o nexus..."
-                withMaven(mavenSettingsConfig: 'maven-settings.xml',
-    	          options: [
-    	            artifactsPublisher(disabled: true),
-    	            findbugsPublisher(disabled: true),
-    	            openTasksPublisher(disabled: true),
-    	            junitPublisher(disabled: true),
-    	            openTasksPublisher(disabled: true),
-    	            jacocoPublisher(disabled: true)
-    	          ]) {
+                withMaven(mavenSettingsConfig: 'maven-settings.xml',options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
                     sh "mvn deploy -Dmaven.test.skip=true -Ddependency-check.skip=true"
                   }
             }
@@ -282,10 +271,8 @@ pipeline {
           agent "any"
           steps {
             script {
-              echo "Realizando deploy no ambiente  ${ENVIRONMENT}"
-              withMaven(mavenSettingsConfig: 'maven-settings.xml',
-              options: [
-                artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
+              echo "Realizando deploy no ambiente  ${ENVIRONMENT}, Host ${WILDFLY_URL}"
+              withMaven(mavenSettingsConfig: 'maven-settings.xml',options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
                   sh "mvn wildfly:undeploy -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
                   sh "mvn wildfly:execute-commands -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
                   sh "mvn wildfly:deploy -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
