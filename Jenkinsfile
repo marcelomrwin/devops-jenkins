@@ -6,6 +6,9 @@ def tagVersion = null
 pipeline {
   environment {
     WILDFLY_GROUP = 'main-server-group'
+    TEST_URL_DEV = 'http://192.168.1.116:5000/devops'
+    TEST_URL_HML = 'http://192.168.1.116:5000/devops'
+    TEST_URL_PRD = 'http://192.168.1.116:5000/devops'
   }
 
   agent any
@@ -39,7 +42,7 @@ pipeline {
                 env.REQUIRES_APPROVAL = 'Y'
                 env.WILDFLY_URL = "${WILDFLY_URL_PRD}"
                 env.PERFORM_RELEASE = 'N'
-
+                env.TEST_URL = "${TEST_URL_PRD}"
               } else if (branch.matches('^release/.+$')) {
                 echo 'Env = HML'
                 env.ENVIRONMENT = "hml"
@@ -48,7 +51,7 @@ pipeline {
                 env.REQUIRES_APPROVAL = 'Y'
                 env.WILDFLY_URL = "${WILDFLY_URL_HML}"
                 env.PERFORM_RELEASE = 'Y'
-
+                env.TEST_URL = "${TEST_URL_HML}"
               } else if (branch.matches('^hotfix/.+$')) {
                 echo 'Env = Hotfix'
                 env.ENVIRONMENT = "hml"
@@ -57,7 +60,7 @@ pipeline {
                 env.REQUIRES_APPROVAL = 'Y'
                 env.WILDFLY_URL = "${WILDFLY_URL_PRD}"
                 env.PERFORM_RELEASE = 'Y'
-
+                env.TEST_URL = "${TEST_URL_HML}"
               } else if (branch == 'develop') {
                 echo 'Env = Desenvolvimento'
                 env.ENVIRONMENT = "dev"
@@ -66,6 +69,7 @@ pipeline {
                 env.REQUIRES_APPROVAL = 'N'
                 env.WILDFLY_URL = "${WILDFLY_URL_DEV}"
                 env.PERFORM_RELEASE = 'N'
+                env.TEST_URL = "${TEST_URL_DEV}"
               } else if (branch.matches('^feature/.+$')) {
                 echo 'Env = Feature'
                 env.ENVIRONMENT = "dev"
@@ -259,6 +263,18 @@ pipeline {
                   sh "mvn wildfly:execute-commands -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
                   sh "mvn wildfly:deploy -Pwildfly-domain -Dmaven.test.skip=true -Ddependency-check.skip=true"
                 }
+            }
+          }
+        }
+        stage('Smoke Teste no ambiente'){
+          when{
+            environment name: 'REQUIRES_DEPLOYMENT', value: 'Y'
+          }
+          steps{
+            sleep(25)
+            script{
+              echo "Realizando teste de fumaça no ambiente ${ENVIRONMENT}"
+              sh "curl --retry-delay 10 --retry 5 ${TEST_URL}"
             }
           }
         }
