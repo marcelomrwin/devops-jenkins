@@ -224,7 +224,7 @@ pipeline {
                 }
 
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
-                  sh "clean release:clean release:prepare release:perform -Dmaven.test.skip=true"
+                  sh "mvn clean release:clean release:prepare release:perform -Dmaven.test.skip=true"
                 }
             }
           }
