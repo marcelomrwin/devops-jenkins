@@ -1,6 +1,7 @@
 @Library('funcoes-auxiliares') _
 
 def pom = null
+def tagVersion = null
 
 pipeline {
   environment {
@@ -95,9 +96,9 @@ pipeline {
           steps {
             script {
               def branch = "${env.BRANCH_NAME}"
+              pom = readMavenPom file: 'pom.xml'
 
               if (branch.matches('^release/.+$')) {
-              	pom = readMavenPom file: 'pom.xml'
                 env.VERSION = pom.version.replace("-SNAPSHOT","")
               } else if (branch.matches('^hotfix/.+$')) {
                 echo 'Env = Hotfix'
@@ -108,6 +109,7 @@ pipeline {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
 
+              tagVersion = ${env.VERSION}
               env.ARTIFACT_ID = getArtifactIdFromPom()
               env.GROUP_ID = getGroupIdFromPom()
             }
@@ -211,9 +213,14 @@ pipeline {
           }
           steps {
             script {
+
+                withCredentials([usernamePassword(credentialsId: 'jenkins-user-pass', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                  sh 'git config user.email $PASSWORD'
+                  sh 'git config user.name $USERNAME'
+                }
+
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
-                  sh "mvn -DnewVersion=${VERSION} versions:set"
-                  sh "mvn versions:commit"
+                  sh "clean release:clean release:prepare release:perform -Dmaven.test.skip=true"
                 }
             }
           }
