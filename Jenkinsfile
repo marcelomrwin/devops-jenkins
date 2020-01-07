@@ -121,14 +121,7 @@ pipeline {
             script {
               echo "Excutando o build da aplicação..."
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
-	          options: [
-	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            jacocoPublisher(disabled: true)
-	          ]) {
+	          options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
                 sh "mvn compile -Ddependency-check.skip=true -Dmaven.test.skip=true"
               }
             }
@@ -142,14 +135,7 @@ pipeline {
             script {
               echo "Executando testes unitários..."
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
-	          options: [
-	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            junitPublisher(disabled: true),
-	            openTasksPublisher(disabled: true),
-	            jacocoPublisher(disabled: true)
-	          ]) {
+	          options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
                 sh "mvn test -Ddependency-check.skip=true"
               }
             }
@@ -163,14 +149,7 @@ pipeline {
             script {
               echo "Executando testes unitários..."
               withMaven(mavenSettingsConfig: 'maven-settings.xml',
-	          options: [
-	            artifactsPublisher(disabled: true),
-	            findbugsPublisher(disabled: false),
-	            openTasksPublisher(disabled: false),
-	            junitPublisher(disabled: false),
-	            openTasksPublisher(disabled: true),
-	            jacocoPublisher(disabled: false)
-	          ]) {
+	          options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: false),openTasksPublisher(disabled: false),junitPublisher(disabled: false),openTasksPublisher(disabled: true),jacocoPublisher(disabled: false)]) {
                 sh "mvn clean verify"
               }
             }
@@ -189,7 +168,7 @@ pipeline {
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
     	          options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
-                    sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
+                    sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
                   }
                 }
 
@@ -228,7 +207,7 @@ pipeline {
         }
         stage('Atualizando Release') {
           when {
-            environment name: 'REQUIRES_BUILD', value: 'Y'
+            environment name: 'PERFORM_RELEASE', value: 'Y'
           }
           steps {
             script {
@@ -241,7 +220,9 @@ pipeline {
         }
         stage('Publicar no Nexus') {
           when {
-            environment name: 'REQUIRES_BUILD', value: 'Y'
+            allOf{
+              environment name: 'REQUIRES_BUILD', value: 'Y'
+            }
           }
           steps {
             script {
