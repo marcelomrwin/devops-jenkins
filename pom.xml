@@ -49,31 +49,13 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.junit.vintage</groupId>
-					<artifactId>junit-vintage-engine</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.junit.jupiter</groupId>
-					<artifactId>junit-jupiter</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.mockito</groupId>
-					<artifactId>mockito-junit-jupiter</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -105,7 +87,6 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<!-- <version>1.4.194</version> -->
 			<scope>test</scope>
 		</dependency>
 
@@ -164,20 +145,20 @@
 					</execution>
 				</executions>
 			</plugin>
-				
+
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.5</version>
 				<configuration>
-                    <excludes>
-                       <!-- Exclude class from test coverage -->
-                        <exclude>**/*com/redhat/devops/DevopsApplication.class</exclude>
-                        <exclude>**/*com/redhat/devops/ServletInitializer.class</exclude>
-                        <!-- Exclude full package from test coverage -->                        
-                        <exclude>**/*com/redhat/devops/test/**</exclude>                        
-                    </excludes>
-                </configuration>
+					<excludes>
+						<!-- Exclude class from test coverage -->
+						<exclude>**/*com/redhat/devops/DevopsApplication.class</exclude>
+						<exclude>**/*com/redhat/devops/ServletInitializer.class</exclude>
+						<!-- Exclude full package from test coverage -->
+						<exclude>**/*com/redhat/devops/test/**</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<id>coverage-initialize</id>
@@ -201,7 +182,7 @@
 						<configuration>
 							<rules>
 								<rule>
-									<element>CLASS</element>									
+									<element>CLASS</element>
 									<limits>
 										<limit>
 											<counter>LINE</counter>
@@ -216,20 +197,61 @@
 				</executions>
 			</plugin>
 
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>5.2.4</version>
+				<configuration>
+					<format>ALL</format>
+					<centralAnalyzerEnabled>false</centralAnalyzerEnabled>
+					<versionCheckEnabled>true</versionCheckEnabled>
+					<cveValidForHours>24</cveValidForHours>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
 		</plugins>
 	</build>
 
 	<profiles>
 		<profile>
-			<id>sonar</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
+			<id>wildfly-domain</id>
 			<properties>
-				<sonar.host.url>http://192.168.1.116:9000</sonar.host.url>
-				<sonar.login>994170e7865a3c79eb13c869970b18c6c332b104</sonar.login>
+				<wildfly-maven-plugin.version>2.0.2.Final</wildfly-maven-plugin.version>
 			</properties>
+			<build>
+				<finalName>${project.artifactId}</finalName>
+				<plugins>
+					<plugin>
+						<groupId>org.wildfly.plugins</groupId>
+						<artifactId>wildfly-maven-plugin</artifactId>
+						<version>${wildfly-maven-plugin.version}</version>
+						<configuration>
+							<filename>${project.build.finalName}.war</filename>
+							<server-groups>
+								<server-group>${env.WILDFLY_GROUP}</server-group>
+							</server-groups>
+							<profiles>
+								<profile>ha</profile>
+							</profiles>
+							<hostname>${env.WILDFLY_URL}</hostname>
+							<port>${env.WILDFLY_PORT}</port>
+							<username>${env.WILDFLY_USER}</username>
+							<password>${env.WILDFLY_PASSWORD}</password>
+							<commands>
+								<command>/server-group=${env.WILDFLY_GROUP}:restart-servers()</command>
+							</commands>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 	</profiles>
 

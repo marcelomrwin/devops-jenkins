@@ -1,4 +1,4 @@
-package com.redhat.devops.test.unit.test.integration;
+package com.redhat.devops.test.integration;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
