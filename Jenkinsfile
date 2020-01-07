@@ -109,7 +109,7 @@ pipeline {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
 
-              tagVersion = ${env.VERSION}
+              tagVersion = "${env.VERSION}"
               env.ARTIFACT_ID = getArtifactIdFromPom()
               env.GROUP_ID = getGroupIdFromPom()
             }
