@@ -32,13 +32,12 @@ pipeline {
 
                if (branch == 'master') {
                 echo 'Env = Produção'
-
                 env.ENVIRONMENT = "prd"
                 env.REQUIRES_BUILD = 'N'
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
-                env.REQUIRES_PRD_APPROVAL = 'Y'
                 env.WILDFLY_URL = "${WILDFLY_URL_PRD}"
+                env.PERFORM_RELEASE = 'N'
 
               } else if (branch.matches('^release/.+$')) {
                 echo 'Env = HML'
@@ -46,8 +45,8 @@ pipeline {
                 env.REQUIRES_BUILD = 'Y'
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
-                env.REQUIRES_HML_APPROVAL = 'Y'
                 env.WILDFLY_URL = "${WILDFLY_URL_HML}"
+                env.PERFORM_RELEASE = 'Y'
 
               } else if (branch.matches('^hotfix/.+$')) {
                 echo 'Env = Hotfix'
@@ -55,8 +54,8 @@ pipeline {
                 env.REQUIRES_BUILD = 'Y'
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'Y'
-                env.REQUIRES_HML_APPROVAL = 'Y'
                 env.WILDFLY_URL = "${WILDFLY_URL_PRD}"
+                env.PERFORM_RELEASE = 'Y'
 
               } else if (branch == 'develop') {
                 echo 'Env = Desenvolvimento'
@@ -65,6 +64,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'Y'
                 env.REQUIRES_APPROVAL = 'N'
                 env.WILDFLY_URL = "${WILDFLY_URL_DEV}"
+                env.PERFORM_RELEASE = 'N'
               } else if (branch.matches('^feature/.+$')) {
                 echo 'Env = Feature'
                 env.ENVIRONMENT = "dev"
@@ -72,6 +72,7 @@ pipeline {
                 env.REQUIRES_DEPLOYMENT = 'N'
                 env.REQUIRES_APPROVAL = 'N'
                 env.WILDFLY_URL = "${WILDFLY_URL_DEV}"
+                env.PERFORM_RELEASE = 'N'
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
               }
@@ -101,7 +102,7 @@ pipeline {
               } else if (branch.matches('^hotfix/.+$')) {
                 echo 'Env = Hotfix'
                 env.VERSION = branch.replaceAll('^hotfix/', '') + "-" + "${BUILD_ID}"
-              } else if (branch == 'develop') {
+              } else if (branch == 'develop' || (branch.matches('^feature/.+$'))) {
                 env.VERSION = getVersionFromPom()
               } else {
                 error "Erro de Validação: A branch ${branch} não é válida!"
@@ -186,14 +187,7 @@ pipeline {
             	echo "GroupId: ${GROUP_ID} ArtifactId: ${ARTIFACT_ID} Version: ${VERSION}"
 
                 withMaven(mavenSettingsConfig: 'maven-settings.xml',
-    	          options: [
-    	            artifactsPublisher(disabled: true),
-    	            findbugsPublisher(disabled: true),
-    	            openTasksPublisher(disabled: true),
-    	            junitPublisher(disabled: true),
-    	            openTasksPublisher(disabled: true),
-    	            jacocoPublisher(disabled: true)
-    	          ]) {
+    	          options: [artifactsPublisher(disabled: true),findbugsPublisher(disabled: true),openTasksPublisher(disabled: true),junitPublisher(disabled: true),openTasksPublisher(disabled: true),jacocoPublisher(disabled: true)]) {
                   withSonarQubeEnv('SonarQube-7.9.2') {
                     sh "mvn sonar:sonar -Dsonar.projectName=${ARTIFACT_ID} -Dsonar.projectKey=${GROUP_ID}-${ARTIFACT_ID}-${env.BRANCH_NAME} -Dsonar.projectVersion=$BUILD_NUMBER -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html"
                   }
